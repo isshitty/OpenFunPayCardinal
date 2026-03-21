@@ -104,36 +104,30 @@ def validate_proxy(proxy: str):
     :param proxy: прокси
     :return: логин, пароль, IP и порт
     """
-    try:
-        if "://" in proxy:
-            scheme, rest = proxy.split("://", 1)
-        else:
-            scheme = "http"
-            rest = proxy
+    if "://" in proxy:
+        scheme, rest = proxy.split("://", 1)
+    else:
+        scheme = "http"
+        rest = proxy
 
-        if "@" in rest:
-            login_password, ip_port = rest.split("@")
-            login, password = login_password.split(":")
-        else:
-            login, password = "", ""
-            ip_port = rest
+    if "@" in rest:
+        login_password, ip_port = rest.split("@")
+        login, password = login_password.split(":")
+    else:
+        login, password = "", ""
+        ip_port = rest
 
-        ip, port = ip_port.split(":")
+    ip, port = ip_port.split(":")
 
-        ip_parts = ip.split(".")
-        if len(ip_parts) != 4 or not all(part.isdigit() and 0 <= int(part) < 256 for part in ip_parts):
-            raise ValueError("Неправильный IP")
+    ip_parts = ip.split(".")
+    if len(ip_parts) != 4 or not all(part.isdigit() and 0 <= int(part) < 256 for part in ip_parts):
+        raise ValueError("Неправильный IP")
 
-        if not port.isdigit() or not 0 < int(port) <= 65535:
-            raise ValueError("Неправильный порт")
+    if not port.isdigit() or not 0 < int(port) <= 65535:
+        raise ValueError("Неправильный порт")
 
-        if scheme not in ("http", "https", "socks5"):
-            raise ValueError("Схема прокси должна быть http, https или socks5")
-
-    except Exception:
-        raise ValueError("Прокси должен иметь формат:\n"
-                         "ip:port\nlogin:password@ip:port\n"
-                         "или socks5://ip:port\nsocks5://login:password@ip:port")
+    if scheme not in ("http", "https", "socks5", "socks5h"):
+        raise ValueError("Схема прокси должна быть http, https, socks5 или socks5h")
 
     return scheme, login, password, ip, port
 

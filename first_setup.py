@@ -146,7 +146,7 @@ def input_proxy(set_telebot_proxy: bool = False) -> str | None:
         except Exception as ex:
             print(f"\nНеверный формат прокси: {ex}. Попробуй еще раз!")
 
-def tg_proxy_process():
+def setup_telegram_proxy():
     config = load_main_config("configs/_main.cfg")
     print(
         f"\n{Fore.MAGENTA}{Style.BRIGHT}┌── {Fore.CYAN}" f"Если хочешь использовать IPv4 прокси ДЛЯ ДОСТУПА К TELEGRAM"
@@ -157,16 +157,16 @@ def tg_proxy_process():
         try:
             proxy = input_proxy(set_telebot_proxy=True)
             username = telebot.TeleBot(config["Telegram"]["token"]).get_me().username
-            print(f"{Fore.CYAN}Подключение к Telegram успешно: @{username}...{Style.RESET_ALL}")
+            print(f"\n\n{Fore.CYAN}Подключение к Telegram успешно: @{username}...{Style.RESET_ALL}")
             break
         except Exception as ex:
-            print(f"{Fore.CYAN}Не удалось добавить прокси: {ex}...{Style.RESET_ALL}")
+            print(f"\n\n{Fore.CYAN}Не удалось добавить прокси: {ex}...{Style.RESET_ALL}")
 
     config.set("Telegram", "proxy", proxy or "")
     print(f"{Fore.CYAN}Сохраняю конфиг...{Style.RESET_ALL}")
     with open("configs/_main.cfg", "w", encoding="utf-8") as f:
         config.write(f)
-    time.sleep(10)
+    time.sleep(5)
 
 
 def first_setup():
