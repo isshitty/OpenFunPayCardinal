@@ -73,24 +73,75 @@
 
 ## :arrow_down: Установка
 
-Для Linux подойдет любой сервер или VPS с Ubuntu 22-24. Остальные параметры подбирайте под свою нагрузку.
-
 ### :large_blue_diamond: Windows
 
-1. Скачайте и установите [Python 3.11.0](https://www.python.org/ftp/python/3.11.0/python-3.11.0-amd64.exe).
-    1. При установке поставьте галочку у `Add python.exe to PATH` на первом экране установки.
-2. Скачайте [FunPay Cardinal](https://github.com/isshitty/OpenFunPayCardinal/archive/refs/heads/master.zip)
-3. Перенесите архив `FunPayCardinal-main.zip` в нужное Вам место и распакуйте его.
-4. Перейдите в папку `FunPayCardinal-main`.
-5. Запустите файл `Setup.bat`. Дождитесь окончания загрузки пакетов.
-6. Закройте командную строку и запустите файл `Start.bat`.
+1. Установите [Python 3.11+](https://www.python.org/downloads/). При установке поставьте галочку
+   `Add python.exe to PATH`.
+2. Скачайте [архив проекта](https://github.com/isshitty/OpenFunPayCardinal/archive/refs/heads/main.zip)
+   и распакуйте его в любое удобное место.
+3. Откройте командную строку (`cmd`) в папке проекта и установите зависимости:
+   ```
+   pip install -r requirements.txt
+   ```
+4. Запустите бота:
+   ```
+   python main.py
+   ```
+5. Следуйте инструкциям мастера первого запуска (golden_key, токен Telegram-бота, пароль от ПУ
+   и т.п.). После настройки бот стартует автоматически.
 
 ### :hotsprings: Linux (Ubuntu)
 
-1. Выполните команду:
-   `wget https://raw.githubusercontent.com/isshitty/OpenFunPayCardinal/main/install-fpc.sh -O install-fpc.sh && bash install-fpc.sh`
-2. Следуйте инструкциям установщика.
-   Данный скрипт автоматически установит всё необходимое и запустит бота как фоновый процесс.
+Команды ниже — просто копируйте и вставляйте по одной. Менять в них ничего не надо: `$USER`
+сам подставит ваше имя пользователя.
+
+1. Установите Python:
+   ```
+   sudo apt update && sudo apt install -y python3 python3-pip python3-venv git
+   ```
+2. Скачайте проект **строго** в папку `~/FunPayCardinal` (этот путь нужен для сервиса):
+   ```
+   git clone https://github.com/isshitty/OpenFunPayCardinal.git ~/FunPayCardinal
+   ```
+3. Создайте виртуальное окружение и установите зависимости:
+   ```
+   python3 -m venv ~/pyvenv
+   ~/pyvenv/bin/pip install -r ~/FunPayCardinal/requirements.txt
+   ```
+4. Запустите бота и пройдите мастер первого запуска (golden_key, токен Telegram-бота, пароль ПУ):
+   ```
+   ~/pyvenv/bin/python ~/FunPayCardinal/main.py
+   ```
+   Когда увидите сообщение об инициализации и поймёте, что всё работает — нажмите `Ctrl+C`,
+   чтобы остановить бота, и переходите к шагу 5.
+
+5. Оформите бота как сервис (он будет работать в фоне и автоматически перезапускаться).
+   Просто выполните три команды подряд:
+   ```
+   sudo cp ~/FunPayCardinal/FunPayCardinal@.service /etc/systemd/system/
+   sudo systemctl daemon-reload
+   sudo systemctl enable --now FunPayCardinal@$USER.service
+   ```
+   Всё, бот запущен в фоне.
+
+#### Что делать дальше
+
+- Посмотреть логи в реальном времени:
+  ```
+  journalctl -u FunPayCardinal@$USER.service -f
+  ```
+- Проверить статус:
+  ```
+  systemctl status FunPayCardinal@$USER.service
+  ```
+- Остановить:
+  ```
+  sudo systemctl stop FunPayCardinal@$USER.service
+  ```
+- Перезапустить (например, после правки конфигов):
+  ```
+  sudo systemctl restart FunPayCardinal@$USER.service
+  ```
 
 ## :electric_plug: Установка плагинов
 
