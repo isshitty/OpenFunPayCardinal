@@ -4,7 +4,6 @@
 
 from __future__ import annotations
 
-import re
 from typing import TYPE_CHECKING
 
 from FunPayAPI import Account
@@ -32,7 +31,10 @@ from locales.localizer import Localizer
 logger = logging.getLogger("TGBot")
 localizer = Localizer()
 _ = localizer.translate
-telebot.apihelper.ENABLE_MIDDLEWARE = True
+try:
+    telebot.apihelper.ENABLE_MIDDLEWARE = True  # legacy flag; ignored in newer telebot.
+except Exception:
+    pass
 
 
 class TGBot:
@@ -42,7 +44,8 @@ class TGBot:
             telebot.apihelper.proxy = {"https": cardinal.MAIN_CFG["Telegram"]["proxy"],
                                        "http": cardinal.MAIN_CFG["Telegram"]["proxy"]}
         self.bot = telebot.TeleBot(self.cardinal.MAIN_CFG["Telegram"]["token"], parse_mode="HTML",
-                                   allow_sending_without_reply=True, num_threads=5)
+                                   allow_sending_without_reply=True, num_threads=5,
+                                   use_class_middlewares=False)
 
         self.file_handlers = {}  # хэндлеры, привязанные к получению файла.
         self.attempts = {}  # {user_id: attempts} - попытки авторизации в Telegram ПУ.
@@ -93,12 +96,8 @@ class TGBot:
             "upload_backup": "cmd_upload_backup",
             "del_logs": "cmd_del_logs",
             "power_off": "cmd_power_off",
-            "watermark": "cmd_watermark",
         }
-        self.__default_notification_settings = {
-            utils.NotificationTypes.ad: 1,
-            utils.NotificationTypes.announcement: 1
-        }
+        self.__default_notification_settings = {}
 
     # User states
     def get_state(self, chat_id: int, user_id: int) -> dict | None:
@@ -289,6 +288,10 @@ class TGBot:
         """
         Проверяет, есть ли пользователь в списке пользователей с доступом к ПУ TG.
         """
+        try:
+            self.setup_chat_notifications(self, m)
+        except Exception:
+            logger.debug("setup_chat_notifications failed", exc_info=True)
         lang = m.from_user.language_code
         if m.chat.type != "private" or (self.attempts.get(m.from_user.id, 0) >= 5) or m.text is None:
             return
@@ -309,7 +312,7 @@ class TGBot:
         else:
             self.attempts[m.from_user.id] = self.attempts.get(m.from_user.id, 0) + 1
             text = _("access_denied", m.from_user.username, language=lang)
-            kb_links = kb.links(language=lang)
+            kb_links = None
             logger.warning(_("log_access_attempt", m.from_user.username, m.from_user.id))
         self.bot.send_message(m.chat.id, text, reply_markup=kb_links)
 
@@ -329,6 +332,10 @@ class TGBot:
         """
         Отправляет основное меню настроек (новым сообщением).
         """
+        try:
+            self.setup_chat_notifications(self, m)
+        except Exception:
+            logger.debug("setup_chat_notifications failed", exc_info=True)
         self.bot.send_message(m.chat.id, _("desc_main"), reply_markup=skb.SETTINGS_SECTIONS())
 
     def send_profile(self, m: Message):
@@ -392,6 +399,7 @@ class TGBot:
         try:
             self.cardinal.account.get()
             self.cardinal.balance = self.cardinal.get_balance()
+            self.cardinal.deals_balance = self.cardinal.get_deals_balance()
         except:
             self.bot.edit_message_text(_("profile_updating_error"), new_msg.chat.id, new_msg.id)
             logger.debug("TRACEBACK", exc_info=True)
@@ -474,35 +482,6 @@ class TGBot:
             return
         blacklist = ", ".join(f"<code>{i}</code>" for i in sorted(self.cardinal.blacklist, key=lambda x: x.lower()))
         self.bot.send_message(m.chat.id, blacklist)
-
-    def act_edit_watermark(self, m: Message):
-        """
-        Активирует режим ввода вотемарки сообщений.
-        """
-        watermark = self.cardinal.MAIN_CFG["Other"]["watermark"]
-        watermark = f"\n<code>{utils.escape(watermark)}</code>" if watermark else ""
-        result = self.bot.send_message(m.chat.id, _("act_edit_watermark").format(watermark),
-                                       reply_markup=skb.CLEAR_STATE_BTN())
-        self.set_state(m.chat.id, result.id, m.from_user.id, CBT.EDIT_WATERMARK)
-
-    def edit_watermark(self, m: Message):
-        self.clear_state(m.chat.id, m.from_user.id, True)
-        watermark = m.text if m.text != "-" else ""
-        if re.fullmatch(r"\[[a-zA-Z]+]", watermark):
-            self.bot.reply_to(m, _("watermark_error"))
-            return
-
-        preview = f"<a href=\"https://sfunpay.com/s/chat/zb/wl/zbwl4vwc8cc1wsftqnx5.jpg\">⁢</a>" if not \
-            utils.has_brand_mark(watermark) else \
-            f"<a href=\"https://sfunpay.com/s/chat/kd/8i/kd8isyquw660kcueck3g.jpg\">⁢</a>"
-        self.cardinal.MAIN_CFG["Other"]["watermark"] = watermark
-        self.cardinal.save_config(self.cardinal.MAIN_CFG, "configs/_main.cfg")
-        if watermark:
-            logger.info(_("log_watermark_changed", m.from_user.username, m.from_user.id, watermark))
-            self.bot.reply_to(m, preview + _("watermark_changed", watermark))
-        else:
-            logger.info(_("log_watermark_deleted", m.from_user.username, m.from_user.id))
-            self.bot.reply_to(m, preview + _("watermark_deleted"))
 
     def send_logs(self, m: Message):
         """
@@ -702,7 +681,7 @@ class TGBot:
         node_id, username = data["node_id"], data["username"]
         self.clear_state(message.chat.id, message.from_user.id, True)
         response_text = message.text.strip()
-        result = self.cardinal.send_message(node_id, response_text, username, watermark=False)
+        result = self.cardinal.send_message(node_id, response_text, username)
         if result:
             self.bot.reply_to(message, _("msg_sent", node_id, username),
                               reply_markup=kb.reply(node_id, username, again=True, extend=True))
@@ -989,9 +968,7 @@ class TGBot:
         result = self.toggle_notification(chat_id, notification_type)
         logger.info(_("log_notification_switched", c.from_user.username, c.from_user.id,
                       notification_type, c.message.chat.id, result))
-        keyboard = kb.announcements_settings if notification_type in [utils.NotificationTypes.announcement,
-                                                                      utils.NotificationTypes.ad] \
-            else kb.notifications_settings
+        keyboard = kb.notifications_settings
         self.bot.edit_message_reply_markup(c.message.chat.id, c.message.id,
                                            reply_markup=keyboard(self.cardinal, c.message.chat.id))
         self.bot.answer_callback_query(c.id)
@@ -1036,12 +1013,6 @@ class TGBot:
         """
         self.bot.answer_callback_query(c.id, _("param_disabled"), show_alert=True)
 
-    def send_announcements_kb(self, m: Message):
-        """
-        Отправляет сообщение с клавиатурой управления уведомлениями о новых объявлениях.
-        """
-        self.bot.send_message(m.chat.id, _("desc_an"), reply_markup=kb.announcements_settings(self.cardinal, m.chat.id))
-
     def send_review_reply_text(self, c: CallbackQuery):
         stars = int(c.data.split(":")[1])
         text = self.cardinal.MAIN_CFG["ReviewReply"][f"star{stars}ReplyText"]
@@ -1061,7 +1032,7 @@ class TGBot:
         self.bot.send_message(c.message.chat.id, _("old_mode_help"))
 
     def empty_callback(self, c: CallbackQuery):
-        self.bot.answer_callback_query(c.id, "🤑 @sidor_donate 🤑")
+        self.bot.answer_callback_query(c.id)
 
     def switch_lang(self, c: CallbackQuery):
         lang = c.data.split(":")[1]
@@ -1069,12 +1040,11 @@ class TGBot:
         self.cardinal.MAIN_CFG["Other"]["language"] = lang
         self.cardinal.save_config(self.cardinal.MAIN_CFG, "configs/_main.cfg")
         if localizer.current_language == "en":
-            self.bot.answer_callback_query(c.id, "The translation may be incomplete and contain errors.\n\n"
-                                                 "If you find errors in the translation, let @sidor0912 know.\n\n"
-                                                 "Thank you :)", show_alert=True)
+            self.bot.answer_callback_query(c.id, "The translation may be incomplete and contain errors.",
+                                           show_alert=True)
         elif localizer.current_language == "uk":
-            self.bot.answer_callback_query(c.id, "Переклад складено за допомогою ChatGPT.\n"
-                                                 "Повідомте @sidor0912, якщо знайдете помилки.", show_alert=True)
+            self.bot.answer_callback_query(c.id, "Переклад може бути неповним і містити помилки.",
+                                           show_alert=True)
         elif localizer.current_language == "ru":
             self.bot.answer_callback_query(c.id, '«А я сейчас вам покажу, откуда на Беларусь готовилось нападение»',
                                            show_alert=True)
@@ -1085,7 +1055,8 @@ class TGBot:
         """
         Регистрирует хэндлеры всех команд.
         """
-        self.mdw_handler(self.setup_chat_notifications, update_types=['message'])
+        # legacy middleware_handler несовместим с telebot >=4.22 без use_class_middlewares.
+        # Перенесли инициализацию notification_settings в reg_admin при успехе и в send_settings_menu.
         self.msg_handler(self.reg_admin, func=lambda msg: msg.from_user.id not in self.authorized_users,
                          content_types=['text', 'document', 'photo', 'sticker'])
         self.cbq_handler(self.ignore_unauthorized_users, lambda c: c.from_user.id not in self.authorized_users)
@@ -1121,9 +1092,6 @@ class TGBot:
         self.msg_handler(self.act_unban, commands=["unban"])
         self.msg_handler(self.unban, func=lambda m: self.check_state(m.chat.id, m.from_user.id, CBT.UNBAN))
         self.msg_handler(self.send_ban_list, commands=["black_list"])
-        self.msg_handler(self.act_edit_watermark, commands=["watermark"])
-        self.msg_handler(self.edit_watermark,
-                         func=lambda m: self.check_state(m.chat.id, m.from_user.id, CBT.EDIT_WATERMARK))
         self.msg_handler(self.send_logs, commands=["logs"])
         self.msg_handler(self.del_logs, commands=["del_logs"])
         self.msg_handler(self.about, commands=["about"])
@@ -1134,7 +1102,6 @@ class TGBot:
         self.msg_handler(self.send_system_info, commands=["sys"])
         self.msg_handler(self.restart_cardinal, commands=["restart"])
         self.msg_handler(self.ask_power_off, commands=["power_off"])
-        self.msg_handler(self.send_announcements_kb, commands=["announcements"])
         self.cbq_handler(self.send_review_reply_text, lambda c: c.data.startswith(f"{CBT.SEND_REVIEW_REPLY_TEXT}:"))
 
         self.cbq_handler(self.act_send_funpay_message, lambda c: c.data.startswith(f"{CBT.SEND_FP_MESSAGE}:"))
@@ -1175,8 +1142,7 @@ class TGBot:
             kwargs["reply_markup"] = keyboard
         to_delete = []
         for chat_id in self.notification_settings:
-            if notification_type != utils.NotificationTypes.important_announcement and \
-                    not self.is_notification_enabled(chat_id, notification_type):
+            if not self.is_notification_enabled(chat_id, notification_type):
                 continue
 
             try:
@@ -1222,35 +1188,6 @@ class TGBot:
             commands = [BotCommand(f"/{i}", _(self.commands[i], language=lang)) for i in self.commands]
             self.bot.set_my_commands(commands, language_code=lang)
 
-    def edit_bot(self):
-        """
-        Изменяет описания и название бота.
-        """
-
-        name = self.bot.get_me().full_name
-        limit = 64
-        add_to_name = ["FunPay Bot | Бот ФанПей", "FunPay Bot", "FunPayBot", "FunPay"]
-        new_name = name
-        if "vertex" in new_name.lower():
-            new_name = ""
-        new_name = new_name.split("ㅤ")[0].strip()
-        if "funpay" not in new_name.lower():
-            for m_name in add_to_name:
-                if len(new_name) + 2 + len(m_name) <= limit:
-                    new_name = f"{(new_name + ' ').ljust(limit - len(m_name) - 1, 'ㅤ')} {m_name}"
-                    break
-            if new_name != name:
-                self.bot.set_my_name(new_name)
-        sh_text = "🛠️ github.com/sidor0912/FunPayCardinal 💰 @sidor_donate 👨‍💻 @sidor0912 🧩 @fpc_plugins 🔄 @fpc_updates 💬 @funpay_cardinal"
-        res = self.bot.get_my_short_description().short_description
-        if res != sh_text:
-            self.bot.set_my_short_description(sh_text)
-        for i in [None, *localizer.languages.keys()]:
-            res = self.bot.get_my_description(i).description
-            text = _("adv_description", self.cardinal.VERSION, language=i)
-            if res != text:
-                self.bot.set_my_description(text, language_code=i)
-
     def init(self):
         self.__register_handlers()
         logger.info(_("log_tg_initialized"))
@@ -1261,10 +1198,24 @@ class TGBot:
         """
         self.send_notification(_("bot_started"), notification_type=utils.NotificationTypes.bot_start)
         k_err = 0
+        offset = None
         while True:
             try:
                 logger.info(_("log_tg_started", self.bot.user.username))
-                self.bot.infinity_polling(logger_level=logging.DEBUG)
+                while True:
+                    try:
+                        ups = self.bot.get_updates(offset=offset, timeout=25, long_polling_timeout=25)
+                    except Exception:
+                        logger.debug("get_updates error", exc_info=True)
+                        time.sleep(3)
+                        continue
+                    for u in ups:
+                        try:
+                            self.bot.process_new_updates([u])
+                        except Exception:
+                            logger.error(_("log_tg_handler_error"))
+                            logger.debug("TRACEBACK", exc_info=True)
+                        offset = u.update_id + 1
             except:
                 k_err += 1
                 logger.error(_("log_tg_update_error", k_err))

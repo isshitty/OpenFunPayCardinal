@@ -175,8 +175,9 @@ def order_confirm_reply_settings(c: Cardinal):
     kb = K() \
         .add(B(_("oc_send_reply", bool_to_text(int(c.MAIN_CFG['OrderConfirm']['sendReply']))),
                None, f"{CBT.SWITCH}:OrderConfirm:sendReply")) \
-        .add(B(_("oc_watermark", bool_to_text(int(c.MAIN_CFG['OrderConfirm']['watermark']))),
-               None, f"{CBT.SWITCH}:OrderConfirm:watermark")) \
+        .add(B(_("oc_skip_if_reviewed",
+                 bool_to_text(int(c.MAIN_CFG['OrderConfirm'].get('skipIfReviewed', '1')))),
+               None, f"{CBT.SWITCH}:OrderConfirm:skipIfReviewed")) \
         .add(B(_("oc_edit_message"), None, CBT.EDIT_ORDER_CONFIRM_REPLY_TEXT)) \
         .add(B(_("gl_back"), None, CBT.MAIN2))
     return kb
@@ -302,27 +303,6 @@ def notifications_settings(c: Cardinal, chat_id: int) -> K:
         .add(B(_("ns_bot_start", l(n.bot_start)), None, f"{p}:{n.bot_start}")) \
         .add(B(_("ns_other", l(n.other)), None, f"{p}:{n.other}")) \
         .add(B(_("gl_back"), None, CBT.MAIN))
-    return kb
-
-
-def announcements_settings(c: Cardinal, chat_id: int):
-    """
-    Генерирует клавиатуру настроек уведомлений объявлений.
-
-    :param c: объект кардинала.
-    :param chat_id: ID чата, в котором вызвана клавиатура.
-
-    :return: объект клавиатуры настроек уведомлений объявлений.
-    """
-    p = f"{CBT.SWITCH_TG_NOTIFICATIONS}:{chat_id}"
-    n = NotificationTypes
-
-    def l(nt):
-        return '🔔' if c.telegram.is_notification_enabled(chat_id, nt) else '🔕'
-
-    kb = K() \
-        .add(B(_("an_an", l(n.announcement)), None, f"{p}:{n.announcement}")) \
-        .add(B(_("an_ad", l(n.ad)), None, f"{p}:{n.ad}"))
     return kb
 
 
@@ -753,8 +733,4 @@ def edit_plugin(c: Cardinal, uuid: str, offset: int, ask_to_delete: bool = False
 
 
 def links(language: None | str = None) -> K:
-    return K().add(B(_("lnk_github", language=language),
-                     url="https://github.com/sidor0912/FunPayCardinal")) \
-        .add(B(_("lnk_updates", language=language), url="https://t.me/fpc_updates")) \
-        .add(B(_("mm_plugins", language=language), url="https://t.me/fpc_plugins")) \
-        .add(B(_("lnk_chat", language=language), url="https://t.me/funpay_cardinal"))
+    return K()

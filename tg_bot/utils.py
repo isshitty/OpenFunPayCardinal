@@ -16,7 +16,6 @@ import datetime
 import os.path
 import json
 import time
-import unicodedata
 import Utils.cardinal_tools
 from tg_bot import CBT
 
@@ -47,14 +46,8 @@ class NotificationTypes:
     """Уведомление о поднятии лотов."""
     other = "10"
     """Прочие уведомления (плагины)."""
-    announcement = "11"
-    """Новости / объявления."""
-    ad = "12"
-    """Реклама."""
     critical = "13"
     """Не отключаемые критически важные уведомления (только авторизованные юзеры и чаты)."""
-    important_announcement = "14"
-    """Не отключаемые новости/объявления (все возможные чаты)."""
 
 
 def load_authorized_users() -> dict[int, dict[str, bool | None | str]]:
@@ -156,16 +149,6 @@ def escape(text: str) -> str:
     return text
 
 
-def has_brand_mark(watermark: str) -> bool:
-    """
-    Проверяет, содержит ли watermark какую-нибудь форму названия
-    """
-    simplified = (unicodedata.normalize("NFKD", watermark)
-                  .encode("ascii", "ignore").decode("ascii").lower())
-    ascii_hits = any(kw in simplified for kw in ("cardinal", "fpc"))
-    raw_hits = any(kw in watermark.lower() for kw in ("кардинал", "🐦", "ᴄᴀʀᴅɪɴᴀʟ"))
-
-    return ascii_hits or raw_hits or "ᑕᗩᖇᗪIᑎᗩᒪ" in watermark
 
 
 def split_by_limit(list_of_str: list[str], limit: int = 4096):
@@ -257,14 +240,16 @@ def generate_profile_text(cardinal: Cardinal) -> str:
     """
     account = cardinal.account  # locale
     balance = cardinal.balance
+    deals = cardinal.deals_balance
+    deals_line = f"\n🤝 <b>В сделках:</b> <code>{deals.total_rub}₽</code>" if deals is not None else ""
     return f"""Статистика аккаунта <b><i>{account.username}</i></b>
 
 <b>ID:</b> <code>{account.id}</code>
 <b>Незавершенных заказов:</b> <code>{account.active_sales}</code>
-<b>Баланс:</b> 
+<b>Баланс:</b>
     <b>₽:</b> <code>{balance.total_rub}₽</code>, доступно для вывода <code>{balance.available_rub}₽</code>.
     <b>$:</b> <code>{balance.total_usd}$</code>, доступно для вывода <code>{balance.available_usd}$</code>.
-    <b>€:</b> <code>{balance.total_eur}€</code>, доступно для вывода <code>{balance.available_eur}€</code>.
+    <b>€:</b> <code>{balance.total_eur}€</code>, доступно для вывода <code>{balance.available_eur}€</code>.{deals_line}
 
 <i>Обновлено:</i>  <code>{time.strftime('%H:%M:%S', time.localtime(account.last_update))}</code>"""
 

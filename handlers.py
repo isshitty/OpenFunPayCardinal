@@ -832,17 +832,29 @@ def send_thank_u_message_handler(cardinal: Cardinal, event: OrderStatusChangedEv
     if not cardinal.MAIN_CFG["OrderConfirm"].getboolean("sendReply") or event.order.status is not types.OrderStatuses.CLOSED:
         return
 
-    text = cardinal_tools.format_order_text(cardinal.MAIN_CFG["OrderConfirm"]["replyText"], event.order)
-    chat = cardinal.account.get_chat_by_name(event.order.buyer_username)
+    order = event.order
+    if cardinal.MAIN_CFG["OrderConfirm"].getboolean("skipIfReviewed", fallback=True):
+        try:
+            fresh = cardinal.account.get_order(order.id)
+            if fresh is not None:
+                order = fresh
+        except Exception:
+            logger.debug("Не удалось получить свежие данные заказа для проверки отзыва.", exc_info=True)
+        if order.review and order.review.stars:
+            logger.info(f"Покупатель $YELLOW{order.buyer_username}$RESET уже оставил отзыв к заказу "  # locale
+                        f"$YELLOW{order.id}$RESET. Пропускаю автоответ на подтверждение.")  # locale
+            return
+
+    text = cardinal_tools.format_order_text(cardinal.MAIN_CFG["OrderConfirm"]["replyText"], order)
+    chat = cardinal.account.get_chat_by_name(order.buyer_username)
     if chat:
         chat_id = chat.id
     else:
-        chat_id = event.order.chat_id
-    logger.info(f"Пользователь $YELLOW{event.order.buyer_username}$RESET подтвердил выполнение заказа "  # locale
-                f"$YELLOW{event.order.id}.$RESET")  # locale
+        chat_id = order.chat_id
+    logger.info(f"Пользователь $YELLOW{order.buyer_username}$RESET подтвердил выполнение заказа "  # locale
+                f"$YELLOW{order.id}.$RESET")  # locale
     logger.info(f"Отправляю ответное сообщение ...")  # locale
-    Thread(target=cardinal.send_message, args=(chat_id, text, event.order.buyer_username),
-           kwargs={'watermark': cardinal.MAIN_CFG["OrderConfirm"].getboolean("watermark")}, daemon=True).start()
+    Thread(target=cardinal.send_message, args=(chat_id, text, order.buyer_username), daemon=True).start()
 
 
 def send_order_confirmed_notification_handler(cardinal: Cardinal, event: OrderStatusChangedEvent):
@@ -872,8 +884,10 @@ def send_bot_started_notification_handler(c: Cardinal, *args):
     """
     if c.telegram is None:
         return
+    deals_total = c.deals_balance.total_rub if c.deals_balance is not None else 0
     text = _("fpc_init", c.VERSION, c.account.username, c.account.id,
-             c.balance.total_rub, c.balance.total_usd, c.balance.total_eur, c.account.active_sales)
+             c.balance.total_rub, c.balance.total_usd, c.balance.total_eur, c.account.active_sales,
+             deals_total)
     for i in c.telegram.init_messages:
         try:
             c.telegram.bot.edit_message_text(text, i[0], i[1])

@@ -121,8 +121,8 @@ gr_edit_message = "✏️ Change the text of the welcome message"
 gr_edit_cooldown = "⏱️ Cooldown: {} days"
 
 # Order confirmation response settings
-oc_watermark = "{} Message watermark"
 oc_send_reply = "{} Send message"
+oc_skip_if_reviewed = "{} Skip if review already left"
 oc_edit_message = "✏️ Change the text of the message"
 
 # Appearance of new msg. notification
@@ -142,7 +142,6 @@ pl_pin = "Pin"
 pl_unpin = "Unpin"
 pl_commands = "⌨️ Commands"
 pl_settings = "⚙️ Settings"
-pl_buy = "💸 Buy plugin"
 
 # Configs
 cfg_download_main = "⤵️ Download main config"
@@ -162,10 +161,6 @@ prx_proxy_add = "➕ Add proxy"
 lnk_github = "🛠️ Create your FunPay bot"
 lnk_updates = "🔄 Updates"
 lnk_chat = "💬 Chat"
-
-# Announcements
-an_an = "{} Announcements"
-an_ad = "{} Advertisement"
 
 # New order
 ord_refund = "💸 Make a refund"
@@ -221,12 +216,7 @@ fpc_init = """✅ <b><u>FunPay Cardinal initialized!</u></b>\n
 👑 <b><i>Account:</i></b>  <code>{}</code> | <code>{}</code>
 💰 <b><i>Balance:</i></b> <code>{}₽, {}$, {}€</code>
 📊 <b><i>Active orders:</i></b>  <code>{}</code>
-
-💬 <b><i>Telegram chat:</i></b> @funpay_cardinal
-🔄 <b><i>Updates:</i></b> @fpc_updates
-🧩 <b><i>Plugins:</i></b> @fpc_plugins
-👨‍💻 <b><i>Developer:</i></b> @woopertail, @sidor0912
-🤑 <b><i>Donate:</i></b> @sidor_donate"""
+🤝 <b><i>Deals balance:</i></b> <code>{}₽</code>"""
 
 create_test_ad_key = "Enter the name of the lot whose auto-delivery you want to test."
 
@@ -234,12 +224,7 @@ test_ad_key_created = """✅ A one-time key for <code>{}</code> delivery has bee
 Send the command from below to chat with the user to whom you want to deliver the item.\n
 <code>!автовыдача {}</code>"""
 
-about = """<b>🐦 FunPay Cardinal 🐦 v{}</b>\n
-<i>Telegram chat:</i> @funpay_cardinal
-<i>Updates:</i> @fpc_updates
-<i>Plugins:</i> @fpc_plugins
-<i>Developer:</i> @woopertail, @sidor0912
-<i>Donate:</i> @sidor_donate"""
+about = """<b>FunPay Cardinal v{}</b>"""
 
 sys_info = """<b><u>Data summary</u></b>
 
@@ -271,23 +256,6 @@ proxy_added = "✅ Proxy <u>{}</u> added successfully."
 proxy_format = "❌ Proxies must be in the format <u>login:password@ip:port</u> or <u>ip:port</u>."
 proxy_adding_error = "❌ There was an error while adding the proxy."
 proxy_undeletable = "❌ This proxy cannot be deleted as it is currently in use."
-
-act_edit_watermark = "Enter a new watermark text. For example:\n{}\n" \
-                     "<code>𝓕𝓾𝓷𝓟𝓪𝔂 𝓒𝓪𝓻𝓭𝓲𝓷𝓪𝓵</code>\n" \
-                     "<code>𝔽𝕦𝕟ℙ𝕒𝕪 ℂ𝕒𝕣𝕕𝕚𝕟𝕒𝕝</code>\n<code>ＦｕｎＰａｙ Ｃａｒｄｉｎａｌ</code>\n" \
-                     "<code>ꜰᴜɴᴘᴀʏ ᴄᴀʀᴅɪɴᴀʟ</code>\n<code>🄵🅄🄽🄿🄰🅈 🄲🄰🅁🄳🄸🄽🄰🄻</code>\n" \
-                     "<code>ⒻⓤⓝⓅⓐⓨ Ⓒⓐⓡⓓⓘⓝⓐⓛ</code>\n<code>𝐅𝐮𝐧𝐏𝐚𝐲 𝐂𝐚𝐫𝐝𝐢𝐧𝐚𝐥</code>\n" \
-                     "<code>𝗙𝘂𝗻𝗣𝗮𝘆 𝗖𝗮𝗿𝗱𝗶𝗻𝗮𝗹</code>\n<code>𝘍𝘶𝘯𝘗𝘢𝘺 𝘊𝘢𝘳𝘥𝘪𝘯𝘢𝘭</code>\n" \
-                     "<code>𝙁𝙪𝙣𝙋𝙖𝙮 𝘾𝙖𝙧𝙙𝙞𝙣𝙖𝙡</code>\n<code>𝙵𝚞𝚗𝙿𝚊𝚢 𝙲𝚊𝚛𝚍𝚒𝚗𝚊𝚕</code>\n" \
-                     "<code>ᖴᑌᑎᑭᗩY ᑕᗩᖇᗪIᑎᗩᒪ</code>\n" \
-                     "<code>FunPay Cardinal</code>\n<code>[FunPay / Cardinal]</code>\n" \
-                     "<code>🤖</code>\n<code>🐦</code>\n\n" \
-                     "You can tap on the examples to copy and edit them to your liking.\nNote that on FunPay, the emoji " \
-                     "🐦 looks different than in Telegram." \
-                     "\n\nTo remove the watermark, send <code>-</code>."
-watermark_changed = "✅ The message watermark has been changed."
-watermark_deleted = "✅ The message watermark has been deleted."
-watermark_error = "❌ Invalid watermark."
 
 logfile_not_found = "❌ Log file not found."
 logfile_sending = "Sending log file (it may take some time)..."
@@ -420,28 +388,20 @@ pl_not_found_err = "❌ Plugin with UUID <code>{}</code> not found."
 pl_file_not_found_err = "❌  File <code>{}</code> not found.\nRestart <i>FPC</i> with command /restart."
 pl_commands_list = "<b><i>{}</i></b> plugin commands list."
 pl_author = "Dev"
-pl_new = "Send me a plugin.\n\n<b>⚠️ ATTENTION! Downloading plugins from questionable sources may lead to unfortunate consequences.\n" \
-         "@fpc_plugins solves most potential issues.</b>"
+pl_new = "Send me a plugin.\n\n<b>⚠️ ATTENTION! Downloading plugins from questionable sources may lead to unfortunate consequences.</b>"
 
 au_user_settings = "Settings for user {}"
-adv_fpc = "😎 FunPay Cardinal - the best bot for FunPay"
-adv_description = """🐦 FunPay Cardinal v{}🐦
+adv_fpc = "Access denied."
+adv_description = """FunPay Cardinal v{}
 
-🤖 Automatic product delivery
-🚀 Auto-raise of lots
-💬 Auto-reply to prepared commands
-🔄 Auto-recovery of lots after sale
-📦 Auto-deactivation of lots if products are out of stock
-🔝 Permanent online presence
-📲 Notifications in Telegram
-🕹️ Full control panel in Telegram
-🧩 Plugins
-🌟 And much more...
-
-🛠️ Create your own bot: github.com/sidor0912/FunPayCardinal
-🔄 Updates: @fpc_updates
-🧩 Plugins: @fpc_plugins
-💬 Chat: @funpay_cardinal"""
+Automatic product delivery
+Auto-raise of lots
+Auto-reply to prepared commands
+Auto-recovery of lots after sale
+Auto-deactivation when goods are out of stock
+Notifications in Telegram
+Full control panel in Telegram
+Plugins"""
 
 # - Menus desc
 desc_main = "Select a settings category."
@@ -465,7 +425,6 @@ desc_mv = "Here you can configure the appearance of new message notifications."
 desc_gr = "Here you can configure the welcome message for new users.\n\n<b>Greeting text:</b>\n<code>{}</code>"
 desc_oc = "Here you can configure an order confirmation message.\n\n<b>Message text:</b>\n<code>{}</code>"
 desc_or = "Here you can configure your response to feedback."
-desc_an = "Here you can configure notifications about announcements."
 desc_cfg = "Hare you can download and upload configs."
 desc_tmplt = "Here you can add and delete answer templates."
 desc_pl = "Here you can get information about the plugins, as well as configure them.\n\n" \
@@ -486,7 +445,6 @@ cmd_upload_plugin = "upload a plugin"
 cmd_ban = "add user to the blacklist"
 cmd_unban = "delete user from blacklist"
 cmd_black_list = "blacklist"
-cmd_watermark = "change message watermark"
 cmd_logs = "download current log-file"
 cmd_del_logs = "delete old log-files"
 cmd_about = "about current version"
@@ -559,8 +517,6 @@ log_access_granted = "$MAGENTA@{} (ID: {})$RESET gained access to the control pa
 log_new_ad_key = "$MAGENTA@{} (ID: {})$RESET created a key to deliver $YELLOW{}$RESET: $CYAN{}$RESET."
 log_user_blacklisted = "$MAGENTA@{} (ID: {})$RESET has blacklisted $YELLOW{}$RESET."
 log_user_unbanned = "$MAGENTA@{} (ID: {})$RESET has removed $YELLOW{}$RESET from the blacklist."
-log_watermark_changed = "$MAGENTA@{} (ID: {})$RESET changed the message watermark to $YELLOW{}$RESET."
-log_watermark_deleted = "$MAGENTA@{} (ID: {})$RESET deleted the message watermark."
 log_greeting_changed = "$MAGENTA@{} (ID: {})$RESET changed the greeting text to $YELLOW{}$RESET."
 log_greeting_cooldown_changed = "$MAGENTA@{} (ID: {})$RESET changed the cooldown of the welcome message to $YELLOW{}$RESET days."
 log_order_confirm_changed = "$MAGENTA@{} (ID: {})$RESET changed the text of order confirmation reply to $YELLOW{}$RESET."

@@ -15,8 +15,6 @@ clear
 echo -e $logo
 
 
-echo -e "\n\n${RED} * GitHub ${CYAN}github.com/sidor0912/FunPayCardinal${RESET}"
-echo -e "${RED} * Telegram ${CYAN}t.me/funpay_cardinal${RESET}"
 echo -e "\n\n\n"
 
 
@@ -310,8 +308,6 @@ esac
 
 clear
 echo -e $logo
-echo -e '\n\n\e[1;91m * GitHub \e[1;96mgithub.com/sidor0912/FunPayCardinal\e[0m'
-echo -e '\e[1;91m * Telegram \e[1;96mt.me/funpay_cardinal\e[0m'
 
 echo -e "\n\n\e[1;92m################################################################################"
 echo -e "Установка завершена."
@@ -344,8 +340,6 @@ sudo systemctl restart "FunPayCardinal@$username.service"
 
 clear
 echo -e $logo
-echo -e '\n\n\e[1;91m * GitHub \e[1;96mgithub.com/sidor0912/FunPayCardinal\e[0m'
-echo -e '\e[1;91m * Telegram \e[1;96mt.me/funpay_cardinal\e[0m'
 
 echo -e "\n\n\e[1;92m################################################################################"
 echo -e "${RED}!СДЕЛАЙ СКРИНШОТ!${CYAN}!СДЕЛАЙ СКРИНШОТ!${RED}!СДЕЛАЙ СКРИНШОТ!${CYAN}!СДЕЛАЙ СКРИНШОТ!"

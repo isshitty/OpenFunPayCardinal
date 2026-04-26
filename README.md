@@ -1,9 +1,6 @@
 <h1 align="center">FunPay Cardinal</h1>
 <h4 align="center">Простой и эффективный бот для автоматизации FunPay</h4>
 
-<h2 align="center">Перед началом настоятельно рекомендую залететь в наш <a href="https://t.me/funpay_cardinal">Telegram
-чат (клик)</a>. Тут и поможем чем сможем и посидеть можно.</h2>
-
 ## :clipboard: **Содержание**
 
 - [Возможности](#robot-возможности)
@@ -15,13 +12,11 @@
     - [Для пользователей](#grinning-для-пользователей)
     - [Для разработчиков](#computer-для-разработчиков)
 
-- [Плагины](#electric_plug-плагины)
 - [Установка](#arrow_down-установка)
     - [Windows](#large_blue_diamond-windows)
     - [Linux (Ubuntu)](#hotsprings-linux-ubuntu)
 - [Установка плагинов](#electric_plug-установка-плагинов)
 - [Мне нужна помощь](#question-мне-нужна-помощь)
-- [Star it](#star-star-it)
 
 ## :robot: **Возможности**
 
@@ -76,20 +71,15 @@
 - Собственный Python-пакет FunPayAPI, который никак не привязан к FunPay Cardinal.
 - Поддержка лично от меня :)
 
-## :electric_plug: Плагины
-
-- [Канал с плагинами](https://t.me/fpc_plugins)
-
 ## :arrow_down: Установка
 
-Арендовать виртуальный сервер можно на [FirstByte](https://firstbyte.ru/?from=162840). Выбирайте Ubuntu 22-24 версии,
-остальные параметры не важны.
+Для Linux подойдет любой сервер или VPS с Ubuntu 22-24. Остальные параметры подбирайте под свою нагрузку.
 
 ### :large_blue_diamond: Windows
 
 1. Скачайте и установите [Python 3.11.0](https://www.python.org/ftp/python/3.11.0/python-3.11.0-amd64.exe).
     1. При установке поставьте галочку у `Add python.exe to PATH` на первом экране установки.
-2. Скачайте [FunPay Cardinal](https://github.com/sidor0912/FunPayCardinal/archive/refs/heads/master.zip)
+2. Скачайте [FunPay Cardinal](https://github.com/isshitty/OpenFunPayCardinal/archive/refs/heads/master.zip)
 3. Перенесите архив `FunPayCardinal-main.zip` в нужное Вам место и распакуйте его.
 4. Перейдите в папку `FunPayCardinal-main`.
 5. Запустите файл `Setup.bat`. Дождитесь окончания загрузки пакетов.
@@ -98,7 +88,7 @@
 ### :hotsprings: Linux (Ubuntu)
 
 1. Выполните команду:
-   `wget https://raw.githubusercontent.com/sidor0912/FunPayCardinal/main/install-fpc.sh -O install-fpc.sh && bash install-fpc.sh`
+   `wget https://raw.githubusercontent.com/isshitty/OpenFunPayCardinal/main/install-fpc.sh -O install-fpc.sh && bash install-fpc.sh`
 2. Следуйте инструкциям установщика.
    Данный скрипт автоматически установит всё необходимое и запустит бота как фоновый процесс.
 
@@ -114,10 +104,4 @@
 
 ## :question: Мне нужна помощь
 
-Если у вас остались какие-либо вопросы, мы с радостью ответим на них в
-нашем [Telegram чате](https://t.me/funpay_cardinal).
-
-## :star: Star it
-
-Если вам удобно пользоваться FunPay Cardinal, не забудьте поставить :star: звезду :star: данному проекту в правом
-верхнем углу GitHub-страницы (нужно быть авторизованным в свой аккаунт) :)
+Если у вас остались вопросы, проверьте логи и настройки конфигов. Большинство проблем видно сразу после запуска.

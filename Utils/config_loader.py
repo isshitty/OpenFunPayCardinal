@@ -116,9 +116,9 @@ def load_main_config(config_path: str):
         },
 
         "OrderConfirm": {
-            "watermark": ["0", "1"],
             "sendReply": ["0", "1"],
-            "replyText": "any"
+            "replyText": "any",
+            "skipIfReviewed": ["0", "1"]
         },
 
         "ReviewReply": {
@@ -141,7 +141,6 @@ def load_main_config(config_path: str):
         },
 
         "Other": {
-            "watermark": "any+empty",
             "requestsDelay": [str(i) for i in range(1, 101)],
             "language": ["ru", "en", "uk"]
         }
@@ -154,6 +153,14 @@ def load_main_config(config_path: str):
         # UPDATE
         if section_name == "Greetings" and "cacheInitChats" in config[section_name]:
             config.remove_option(section_name, "cacheInitChats")
+            with open("configs/_main.cfg", "w", encoding="utf-8") as f:
+                config.write(f)
+        elif section_name == "OrderConfirm" and "watermark" in config[section_name]:
+            config.remove_option(section_name, "watermark")
+            with open("configs/_main.cfg", "w", encoding="utf-8") as f:
+                config.write(f)
+        elif section_name == "Other" and "watermark" in config[section_name]:
+            config.remove_option(section_name, "watermark")
             with open("configs/_main.cfg", "w", encoding="utf-8") as f:
                 config.write(f)
         # END OF UPDATE
@@ -183,11 +190,6 @@ def load_main_config(config_path: str):
                 config.set("Greetings", "greetingsCooldown", "2")
                 with open("configs/_main.cfg", "w", encoding="utf-8") as f:
                     config.write(f)
-            elif section_name == "OrderConfirm" and param_name == "watermark" and param_name not in config[
-                section_name]:
-                config.set("OrderConfirm", "watermark", "1")
-                with open("configs/_main.cfg", "w", encoding="utf-8") as f:
-                    config.write(f)
             elif section_name == "FunPay" and param_name == "keepSentMessagesUnread" and \
                     param_name not in config[section_name]:
                 config.set("FunPay", "keepSentMessagesUnread", "0")
@@ -214,11 +216,6 @@ def load_main_config(config_path: str):
                 config.set(section_name, "locale", "ru")
                 with open("configs/_main.cfg", "w", encoding="utf-8") as f:
                     config.write(f)
-            elif section_name == "Other" and param_name == "watermark" and \
-                    param_name in config[section_name] and "𝑪𝒂𝒓𝒅𝒊𝒏𝒂𝒍" in config[section_name][param_name]:
-                config.set(section_name, param_name, "🐦")
-                with open("configs/_main.cfg", "w", encoding="utf-8") as f:
-                    config.write(f)
             elif section_name == "Greetings" and param_name == "onlyNewChats" and param_name not in config[
                 section_name]:
                 config.set("Greetings", "onlyNewChats", "0")
@@ -239,6 +236,11 @@ def load_main_config(config_path: str):
                     config.write(f)
             elif section_name == "Telegram" and param_name == "proxy" and param_name not in config[section_name]:
                 config.set("Telegram", "proxy", "")
+                with open("configs/_main.cfg", "w", encoding="utf-8") as f:
+                    config.write(f)
+            elif section_name == "OrderConfirm" and param_name == "skipIfReviewed" and \
+                    param_name not in config[section_name]:
+                config.set("OrderConfirm", "skipIfReviewed", "1")
                 with open("configs/_main.cfg", "w", encoding="utf-8") as f:
                     config.write(f)
 

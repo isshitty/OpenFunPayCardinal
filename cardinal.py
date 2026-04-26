@@ -1,6 +1,8 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Callable
+from dataclasses import dataclass
 
+from bs4 import BeautifulSoup
 from FunPayAPI import types
 from FunPayAPI.common.enums import SubCategoryTypes
 from Utils.cardinal_tools import validate_proxy, build_proxy
@@ -26,7 +28,6 @@ import os
 from pip._internal.cli.main import main
 import FunPayAPI
 import handlers
-import announcements
 from locales.localizer import Localizer
 from FunPayAPI import utils as fp_utils
 from Utils import cardinal_tools
@@ -83,6 +84,13 @@ class PluginData:
         self.pinned = pinned
 
 
+@dataclass
+class DealsBalance:
+    """Сумма в сделках (видна на /deal/), всегда в рублях. Сколько доступно к выводу — в обычном
+    Balance.available_rub."""
+    total_rub: float = 0.0
+
+
 class Cardinal(object):
     def __new__(cls, *args, **kwargs):
         if not hasattr(cls, "instance"):
@@ -136,6 +144,7 @@ class Cardinal(object):
         self.start_time = int(time.time())
 
         self.balance: FunPayAPI.types.Balance | None = None
+        self.deals_balance: DealsBalance | None = None
         self.raise_time = {}  # Временные метки поднятия категорий {id игры: след. время поднятия}
         self.raised_time = {}  # Время последнего поднятия категории {id игры: время последнего поднятия}
         self.__exchange_rates = {}  # Курс валют {(валюта1, валюта2): (курс, время обновления)}
@@ -216,6 +225,7 @@ class Cardinal(object):
             try:
                 self.account.get()
                 self.balance = self.get_balance()
+                self.deals_balance = self.get_deals_balance()
                 greeting_text = cardinal_tools.create_greeting_text(self)
                 cardinal_tools.set_console_title(f"FunPay Cardinal - {self.account.username} ({self.account.id})")
                 for line in greeting_text.split("\n"):
@@ -296,6 +306,31 @@ class Cardinal(object):
             raise Exception(...)
         balance = self.account.get_balance(random.choice(lots).id)
         return balance
+
+    def get_deals_balance(self) -> DealsBalance | None:
+        """
+        Получает сумму в сделках со страницы /deal/ (<span class='balances-value'> в
+        <h1 class='balances-header'>). FunPay показывает одно число в рублях.
+        Возвращает None при ошибке — бот не падает.
+        """
+        import re
+        try:
+            response = self.account.method("get", "deal/", {"accept": "*/*"}, {}, raise_not_200=True)
+            parser = BeautifulSoup(response.content.decode(), "html.parser")
+            header = parser.find(class_="balances-header")
+            if header is None:
+                logger.debug("get_deals_balance: не найден .balances-header на /deal/.")
+                return None
+            value_el = header.find(class_="balances-value")
+            if value_el is None:
+                logger.debug("get_deals_balance: не найден .balances-value внутри .balances-header.")
+                return None
+            raw = value_el.get_text(strip=True).replace("\xa0", "")
+            num = re.sub(r"[^\d.,-]", "", raw).replace(",", ".")
+            return DealsBalance(total_rub=float(num) if num else 0.0)
+        except Exception:
+            logger.debug("get_deals_balance: ошибка при получении баланса сделок.", exc_info=True)
+            return None
 
     # Прочее
     def raise_lots(self) -> int:
@@ -447,8 +482,7 @@ class Cardinal(object):
         return entities
 
     def send_message(self, chat_id: int | str, message_text: str, chat_name: str | None = None,
-                     interlocutor_id: int | None = None, attempts: int = 3,
-                     watermark: bool = True) -> list[FunPayAPI.types.Message] | None:
+                     interlocutor_id: int | None = None, attempts: int = 3) -> list[FunPayAPI.types.Message] | None:
         """
         Отправляет сообщение в чат FunPay.
 
@@ -457,13 +491,8 @@ class Cardinal(object):
         :param chat_name: название чата (необязательно).
         :param interlocutor_id: ID собеседника (необязательно).
         :param attempts: кол-во попыток на отправку сообщения.
-        :param watermark: добавлять ли водяной знак в начало сообщения?
-
         :return: объект сообщения / последнего сообщения, если оно доставлено, иначе - None
         """
-        if self.MAIN_CFG["Other"].get("watermark") and watermark and not message_text.strip().startswith("$photo="):
-            message_text = f"{self.MAIN_CFG['Other']['watermark']}\n" + message_text
-
         entities = self.parse_message_entities(message_text)
         if all(isinstance(i, float) for i in entities) or not entities:
             return
@@ -643,7 +672,6 @@ class Cardinal(object):
         получает данные аккаунта и профиля.
         """
         self.add_handlers_from_plugin(handlers)
-        self.add_handlers_from_plugin(announcements)
         self.load_plugins()
         self.add_handlers()
 
@@ -661,21 +689,6 @@ class Cardinal(object):
             except:
                 logger.warning("Произошла ошибка при установке команд.")
                 logger.debug("TRACEBACK", exc_info=True)
-            try:
-                self.telegram.edit_bot()
-            except AttributeError:  # todo убрать когда-то
-                logger.warning("Произошла ошибка при изменении бота Telegram. Обновляю библиотеку...")
-                logger.debug("TRACEBACK", exc_info=True)
-                try:
-                    main(["install", "-U", "pytelegrambotapi==4.15.2"])
-                    logger.info("Библиотека обновлена.")
-                except:
-                    logger.warning("Произошла ошибка при обновлении библиотеки.")
-                    logger.debug("TRACEBACK", exc_info=True)
-            except:
-                logger.warning("Произошла ошибка при изменении бота Telegram.")
-                logger.debug("TRACEBACK", exc_info=True)
-
             Thread(target=self.telegram.run, daemon=True).start()
 
         self.__init_account()
